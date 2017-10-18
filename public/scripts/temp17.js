@@ -1,11 +1,12 @@
 
 function temp17Controller($scope, $window, $timeout, $http, temp2Src, callback, $q){
-	var loopCounter = 0;
+  var loopCounter = 0;
     var cb = false;
     var interval1, interval2;
 
     var localData;
-            
+    var newsSource;        
+
     var config = {
 
         //source -> latest, top, popular
@@ -35,97 +36,16 @@ function temp17Controller($scope, $window, $timeout, $http, temp2Src, callback, 
         console.log("config source -> " + config.source);
     
 
-        function checkIfNewsDataExpired(){
-
-          var currentDate = moment().format('MM-DD-YYYY');
-
-          if (localStorage.getItem('news-expiration-date') == null) {
-
-              getDataFromApi();
-          	
-          }else{
-
-            if(currentDate == localStorage.getItem('news-expiration-date')) {
-              console.log("News data is still within the same day");
-              console.log("Getting data from the local storage");
-
-              if (localStorage.getItem('news-source') == null) {
-                localStorage.setItem('news-source',config.source);
-                getDataFromApi();
-              }
-
-              if (localStorage.getItem('news-source') != config.source) {
-                console.log("news source is not the same with the config.source, getting data from api");
-                getDataFromApi();
-              }
-
-              insertDataToScope();
-
-            }else{
-
-              getDataFromApi();
-
-
-            }
-
-          }
-
-        } // end of the checkIfNewsDataExpired function
-
         
     // checkIfNewsDataExpired();
 
     for(var i=0; i< $scope.TemplateData.length; i++){
-    		if($scope.TemplateData[i].Template == 'temp17'){
-    			localData = $scope.TemplateData[i].TempData;
-    			insertDataToScope();
-    		}
-    	}
-
-        
-
-      // this function  will get data from the api if the json file is not yet saved in the local storage
-      function getDataFromApi() {
-
-          console.log("fetch data from news api");
-
-
-          $http.get(config.url)
-              .then(function(response) {
-
-                  var currentDate = moment().format('MM-DD-YYYY');
-
-                  if (response.data) {
-                      localStorage.setItem('news-expiration-date',currentDate);
-                      localStorage.setItem('news',JSON.stringify(response.data));
-                      localStorage.setItem('news-position',0);
-                      localStorage.setItem('news-source',config.source);
-                      console.log("fetch data from the local storage");
-                      //location.reload();
-                      insertDataToScope();
-                  } else {
-                      console.log("nothing returned");
-                  }
-              })
-              .catch(function() {
-                  // handle error
-                  console.log('error occurred');
-
-                  if (localStorage.getItem('news') != null && localStorage.getItem('news') != '') {
-                    console.log("fetch data from the local storage");
-                    insertDataToScope();
-                  }else{
-
-                  	if (cb == false) {
-                  		callback();	
-                  	}
-                                        
-                    // $(".news-loader").fadeIn("slow");
-                  }
-              })
-
+        if($scope.TemplateData[i].Template == 'temp17'){
+          localData = $scope.TemplateData[i].TempData;
+          newsSource = $scope.TemplateData[i].source;
+          insertDataToScope();
+        }
       }
-
           //insert all the data to the angular $scope
       function insertDataToScope() {
           
@@ -188,10 +108,10 @@ function temp17Controller($scope, $window, $timeout, $http, temp2Src, callback, 
               changeNews(currentPosition,newsCount);
 
               if (loopCounter == 0) {
-              	newsloop();
-              	cb = true;
-              	callCallback();
-              	loopCounter++;
+                newsloop();
+                cb = true;
+                callCallback();
+                loopCounter++;
               }
 
               
@@ -223,7 +143,7 @@ function temp17Controller($scope, $window, $timeout, $http, temp2Src, callback, 
 
     function removeNewsClass(){
 
-		$(".news-portrait .header").delay(2000).removeClass("fadeInLeft");
+    $(".news-portrait .header").delay(2000).removeClass("fadeInLeft");
         $(".news-portrait .news").delay(2000).removeClass("news-animation");
         $(".news-portrait .news-aside-div").delay(2000).removeClass("fadeInRight");
         $(".news-portrait .divider-bottom").delay(2000).removeClass("fadeInUp");
@@ -280,20 +200,20 @@ function temp17Controller($scope, $window, $timeout, $http, temp2Src, callback, 
          
 
 
-	function removeInterval() {
+  function removeInterval() {
 
-		clearInterval(interval13);
-		clearInterval(interval14);		
+    clearInterval(interval13);
+    clearInterval(interval14);    
 
-		
-	}
+    
+  }
 
-	function callCallback() {
+  function callCallback() {
 
-		if (cb) {
-			$timeout(removeInterval, 37000);      
-			$timeout(callback, 39000);	
-		}
-		
-	}
+    if (cb) {
+      $timeout(removeInterval, 37000);      
+      $timeout(callback, 39000);  
+    }
+    
+  }
 }

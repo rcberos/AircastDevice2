@@ -1,240 +1,177 @@
 
-function temp24Controller($scope, $window, $timeout, $http, tempSrc, callback){
+function temp24Controller($scope, $window, $timeout, $http, tempSrc, callback){ 
 
- /*
-    1. entertainment
-    buzzfeed and entertainment-weekly
 
-    2. breaking news
-    cnn, al-jazeera-english, google-news
-
-    3. financial and business
-    -bloomberg,business insider uk
-
-    4. tech
-    techcrunch
-
-    5. sports
-    espn
-    */
-
-    var loopCounter = 0;
-    var interval1, interval2;
-
-    var localData;
-            
+  var filter = ["now_playing","upcoming","popular","top_rated"];
+    var size= ["w92", "w154", "w185", "w342", "w500", "w780", "original"]
     var config = {
+      "filter": filter[1],
+      "posterSize": size[4],
+      "backgroundSize": size[5],
+      "loop": true,
+      "loopInterval": 10000,
+      "animation": "flipInX"
+    }
 
-        //source -> latest, top, popular
-        'sourceList': [ 'buzzfeed','cnn','espn','google-news','entertainment-weekly','al-jazeera-english','bloomberg,','techcrunch','business-insider-uk'],
-        'source': 'cnn',
-        'sort':'top',
-        'apiKey': '44e7bd68b7d74cef902f1d9c7cb96b72',
-        'loopNews':true,
-        'loopInterval':13000,
-        'image':{
-            'buzzfeed': '/assets/logo-buzzfeed.png',
-            'cnn': '/assets/logo-cnn.png',
-            'espn': '/assets/logo-espn.png',
-            'google-news': '/assets/logo-google-news.png',
-            'entertainment-weekly': '/assets/logo-entertainment-weekly.png',
-            'al-jazeera-english': '/assets/logo-aljazeera.png',
-            'bloomberg': '/assets/logo-bloomberg.png',
-            'techcrunch': '/assets/logo-techcrunch.png',
-            'business-insider': '/assets/logo-business-insider.png'
+    var temp, movieData;
+    var loopCounter = 0;
+    var currentPosition = 0;
+    var moviesLength = 0;
+    var movies, interval9, interval10; 
+
+    $("#movieRatingStar").rateYo({
+        starWidth: "20px",
+        rating: 0
+    });
+
+
+    config.url = "https://api.themoviedb.org/3/movie/"+config.filter+"?api_key=f2ebc8131c456f6ee2f134ac299aa40f&language=en&US";
+
+    if (config.filter == "now_playing") {
+      $scope.movieslist = "Movies in Cinemas";
+    }else if(config.filter == "upcoming"){
+      $scope.movieslist = "Latest Movies";
+    }else if(config.filter == "popular"){
+      $scope.movieslist = "Popular Movies";
+    }else if (config.filter == "top_rated"){
+      $scope.movieslist = "Top Rated Movies";
+    }else{
+      $scope.movieslist = "Latest Movies";
+    }
+
+    for(var i=0; i< $scope.TemplateData.length; i++){
+    if($scope.TemplateData[i].Template == 'temp24'){
+      movieData = $scope.TemplateData[i].TempData.results;
+      currentPosition = $scope.TemplateData[i].moviePosition;
+      getDataFromStorage();
+    }
+  }
+
+        function updateValues() {
+          $scope.TemplateData.forEach(function(item){
+          if(item.Template == 'temp24'){
+              item.moviePosition = currentPosition;
+              }
+        })
         }
 
-    }
-    
-    config.url = 'https://newsapi.org/v1/articles?source='+config.source+'&sortBy='+config.sort+'&apiKey='+config.apiKey;
-    
-        console.log(config.url);
-        console.log("config source -> " + config.source);
+       function getDataFromStorage() {
 
+          moviesLength = movieData.length;
+          inserDataToScope();
+      }
+
+
+    function inserDataToScope(){
+
+        var result = movieData[currentPosition];
+        var temp;
+
+        console.log("Movie position: " + currentPosition + "/" + moviesLength);
+
+        if (result.vote_average == 0) {
+            temp = "(No ratings yet)";
+        }else if ((result.vote_average+"").length == 1) {
+            temp = "Ratings: " + result.vote_average + " .0 / 10";
+        }else {
+          temp = "Ratings: " + result.vote_average + " / 10";
+        }
+
+        if (result.vote_average == "(No ratings yet)") {
+            $("h2").css("font-size",".5em");
+        }else {
+            $("h2").css("font-size",".8em");
+        }
+
+
+        $scope.title = result.original_title;
+        $scope.description = result.overview;
+        $scope.vote_average = temp;
+        $scope.release_date = "Release Date: " + moment(result.release_date).format('LL');
+        $scope.poster_path = "http://image.tmdb.org/t/p/"+config.posterSize+"/"+result.poster_path;
+        $scope.backdrop_path = "http://image.tmdb.org/t/p/"+config.backgroundSize+"/"+result.backdrop_path;
+        $scope.animation = config.animation;
+
+        console.log('vote avarage: ',result.vote_average);
+        $("#movieRatingStar").rateYo("rating", result.vote_average/2);
+
+        if (loopCounter == 0) {
+          movieloop();
+          loopCounter++;  
+        }
         
-        for(var i=0; i< $scope.TemplateData.length; i++){
-    		if($scope.TemplateData[i].Template == 'temp24'){
-    			localData = $scope.TemplateData[i].TempData;
-    			insertDataToScope();
-    		}
-    	}
 
+    }
 
-          //insert all the data to the angular $scope
-      function insertDataToScope() {
-          console.log('temp 24 data insert');
-          $(".news-loader").fadeOut("slow",function(){
-  
-              // var x = localStorage.getItem('news');
-              var x = localData;
-              // var parsedData = JSON.parse(x);
-              var parsedData = localData;
+    function changeMovie(){
+      
+         if ((currentPosition+1) >= moviesLength) {
+              currentPosition = 0;
+              updateValues();
+              inserDataToScope();
 
-              // //check if data is empty
-              // if (parsedData == '') {
-              //   getDataFromApi();
-              // }
-
-              var newsList = parsedData.articles;
-              var currentPosition = parseInt(localStorage.getItem("news-position")) || 0;
-              var newsCount = newsList.length-1;
-              var article = newsList[currentPosition];
-
-              var title = article.title;
-              var author = article.author || "";
-
-              var rawDate = article.publishedAt;
-              var dateCreated;
-
-              if (rawDate !== null) {
-                    dateCreated = moment(article.publishedAt).format('LL');
-              }else {
-                    dateCreated = "";
-              }
-
-              console.log("News-Position " + currentPosition + "/"+newsCount);
-
-              var description = article.description || "";
-              var featuredImage = article.urlToImage;
-
-              if (featuredImage === null || featuredImage == "") {
-                  featuredImage = "assets/news-background.jpeg";
-              }
-
-                var articleAside =  returnArticle(currentPosition,newsCount);
-                var article1 = newsList[articleAside[0]];
-                var article2 = newsList[articleAside[1]];
-                var article3 = newsList[articleAside[2]];
-
-                $scope.news = {
-                    'title': title,
-                    'author': author,
-                    'dateCreated': dateCreated,
-                    'description': description,
-                    'featuredImage': featuredImage,
-                    'article1': article1,
-                    'article2':article2,
-                    'article3':article3,
-                    'sourceIcon': config.image[config.source]
-                }
-              
-              $scope.$apply();
-              changeNews(currentPosition,newsCount);
-
-              if(title.length > 50) {
-                  $(".news-headline h1").css("font-size","1.2em");
-              }else {
-                $(".news-headline h1").css("font-size","1.5em");
-              }
-
-              if (description.length > 200) {
-                  $(".news-upper").css("margin-top","3em")
-              }else {
-                  $(".news-upper").css("margin-top","4em")
-              }
-
-              if (loopCounter == 0) {
-              	newsloop();
-              	loopCounter++;
-              }
-
-              
-        });
-          
-      }; // end of insertDataToScope
-
-      function newsloop(){
-
-        if(config.loopNews){
-            
-                interval1 = setInterval(function () {
-                    removeNewsClass();
-                }, config.loopInterval/2);
-            
-                interval2 = setInterval(function () {
-                  
-                    insertDataToScope();
-                    addNewsClass();
-
-                }, config.loopInterval);
-            
+          } else {
+              currentPosition++;
+              updateValues();
+              inserDataToScope();
           }
+
+    }
+
+    function movieRemoveClass(){
+    $(".movie-poster").delay(2000).removeClass("bounceInDown");   
+        $(".movie-title").delay(2000).removeClass(config.animation);   
+        $(".movie-release-date").delay(2000).removeClass(config.animation);   
+        $(".movie-description").delay(2000).removeClass(config.animation);   
+        $(".movie-ratings").delay(2000).removeClass(config.animation);   
+        $(".movie-logo").delay(2000).removeClass("fadeInUp");   
+    }
+
+    function movieAddClass(){
+    $(".movie-poster").addClass("bounceInDown");
+        $(".movie-title").addClass(config.animation);
+        $(".movie-release-date").addClass(config.animation);
+        $(".movie-description").addClass(config.animation);
+        $(".movie-ratings").addClass(config.animation);
+        $(".movie-logo").addClass("fadeInUp");
+    }
+
+
+    function movieloop(){
+
+      if (config.loop) {
+
+     interval16 = setInterval(function () {
+            movieRemoveClass();     
+        }, config.loopInterval/2);
+
+      interval17 = setInterval(function () {
+            changeMovie();
+            movieAddClass();
+            $scope.$apply();
+        }, config.loopInterval);
 
       }
-        
 
-
-
-    function removeNewsClass(){
-
-		$(".news .header").delay(2000).removeClass("fadeInLeft");
-        $(".news .news").delay(2000).removeClass("news-animation");
-        $(".news .news-aside-div").delay(2000).removeClass("fadeInRight");
-        $(".news .divider-bottom").delay(2000).removeClass("fadeInUp");
-        $(".news .news-item").delay(2000).removeClass("fadeInRight");
-        $(".news .news-source-div").delay(2000).removeClass("fadeInDown");
-    
     }
 
-    function addNewsClass(){
-
-        $(".news .header").addClass("fadeInLeft");
-        $(".news .news").addClass("news-animation");
-        $(".news .news-aside-div").addClass("fadeInRight");
-        $(".news .divider-bottom").addClass("fadeInUp");
-        $(".news .news-item").addClass("fadeInRight");
-        $(".news .news-source-div").addClass("fadeInDown");
-
-    }      
-        
-    function changeNews(currentPosition,newsCount) {
-
-              //saving data in local storage
-              if (currentPosition >= newsCount) {
-                  currentPosition = 0;
-                  localStorage.setItem('news-position', currentPosition);
-              } else {
-                  currentPosition++;
-                  localStorage.setItem('news-position', currentPosition);
-              }
-
-          }  //end of changeNews function
-        
-    function returnArticle(currentPosition,newsCount){
-
-              var counter = parseInt(currentPosition)+1;
-              var articleAsidePosition = []; 
-
-              for (var i = 0; i < 3; i++ ) {
-                  
-                  if (counter <= newsCount) {
-                      articleAsidePosition.push(counter);
-                      counter++;
-                  }else {
-                      counter = 0;
-                      articleAsidePosition.push(counter);
-                      counter++;
-                  }
-                  
-              }
-             
-             return articleAsidePosition;
-          }
-         
-         
 
 
-	function removeInterval() {
 
-		if (interval1 != undefined && interval2 != undefined) {
-			clearInterval(interval1);
-			clearInterval(interval2);		
-		} 
 
-		
-	}
+  function removeInterval() {
 
-    $timeout(removeInterval, 37000);      
-	$timeout(callback, 39000);
 
-}
+    if (interval16 != undefined && interval17 != undefined) {
+      clearInterval(interval16);
+      clearInterval(interval17);    
+    } 
+
+
+  }
+
+    $timeout(removeInterval, 39000);   
+    $timeout(callback, 40000);
+
+
+};

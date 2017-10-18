@@ -297,19 +297,19 @@ app.controller('MainController', function($scope, $http, $interval, $timeout, $w
 
     // landscape-content
     // news-landscape-cnn
-    window['temp10GetData'].apply(null, payl);
-    //nearby-restaurant-landscape
-    window['temp11GetData'].apply(null, payl);
+    // window['temp10GetData'].apply(null, payl);
+    // //nearby-restaurant-landscape
+    // window['temp11GetData'].apply(null, payl);
     //weather-landscape
     window['temp12GetData'].apply(null, payl);
-    //currency-landscape
-    window['temp13GetData'].apply(null, payl);
-    //twitter-landscape
-    window['temp14GetData'].apply(null, payl);
-    //hugot-landscape
-    window['temp15GetData'].apply(null, payl);
-    //movie-landscape
-    window['temp16GetData'].apply(null, payl);
+    // //currency-landscape
+    // window['temp13GetData'].apply(null, payl);
+    // //twitter-landscape
+    // window['temp14GetData'].apply(null, payl);
+    // //hugot-landscape
+    // window['temp15GetData'].apply(null, payl);
+    // //movie-landscape
+    // window['temp16GetData'].apply(null, payl);
 
     
 

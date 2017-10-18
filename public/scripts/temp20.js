@@ -1,5 +1,7 @@
-function temp20Controller($scope, $window, $timeout, $http, temp2Src, callback, $q){
-	var config =  {
+function temp20Controller($scope, $window, $timeout, $http, tempSrc, callback){ 
+
+   
+        var config =  {
             'loop': true,
             'loopInterval': 10000,
             'animationIn': 'zoomInUp',
@@ -8,146 +10,53 @@ function temp20Controller($scope, $window, $timeout, $http, temp2Src, callback, 
 
 
         var loopCounter = 0;
-        var cb = false;
         var twitterCounter =  parseInt(localStorage.getItem('twitter-counter')) || 0;
+        // var twitterCounter = 0;
         var temp, twitterData, hashtagList;
         var interval7, interval8;
 
         var twitterPosition = 0;
-
-       function checkIfTwitterDataExpired(){
-
-                var currentTimeStamp = moment().unix();
-
-                if (localStorage.getItem('twitter-expiration-date') == null) {
-
-                    getDataFromApi();
-                
-                }else{
-
-                  if(localStorage.getItem('twitter-expiration-date') >= currentTimeStamp) {
-                    console.log("Twitter data is still good and data is still within 4 hours.");
-                    console.log("Getting data from the local storage");
-
-                    if (localStorage.getItem('twitter') != null || localStorage.getItem('twitter') != '') {
-                      
-                      getDataFromStorage();
-                    }
-
-                      console.log("data is not good, getting data from the api");
-                      getDataFromApi();
-
-                    
-
-                  }else{
-
-                    getDataFromApi();
+        var twitterArray = 0;
 
 
-                  }
+    $scope.TemplateData.forEach(function(item){
+    if(item.Template == 'temp20'){
+          twitterData = item.TempData;
+          twitterPosition = item.lastTweet;
+          twitterArray = item.lastArray;
 
-                }
+              $(".twitter-portrait .loader").fadeOut("slow");
+              inserDataToScope();
+        }
+  })
 
-              } // end of the checkIfNewsDataExpired function
-
-
-        // checkIfTwitterDataExpired();
-
-         
-
-         function getDataFromApi() {
-
-          console.log("fetch data from twitter api");
-
-
-          $http.get('/api/twitter')
-              .then(function(response) {
-
-                  console.log(response);
-
-                  var currentTimeStamp = moment().unix() + 14400;
-
-                  console.log(response.data);
-
-                  if (response.data) {
-                      localStorage.setItem('twitter-expiration-date',currentTimeStamp);
-                      localStorage.setItem('twitter',JSON.stringify(response.data));
-                      localStorage.setItem('twitter-position',0);
-                      console.log("fetch data from the local storage");
-
-                      getDataFromStorage();
-                  } else {
-                      console.log("nothing returned");
-                  }
-              })
-              .catch(function() {
-                  // handle error
-                  console.log('error occurred');
-                  if (localStorage.getItem('twitter') != null && localStorage.getItem('twitter') != '') {
-                    console.log("fetch data from the local storage");
-                    getDataFromStorage();
-                  }else{
-                  	if (cb == false) {
-                  		callback();	
-                  	}
-                    
-                    // $(".twitter .loader").fadeIn("slow");
-                  }
-              })
-
-      }
-
-      function currentHashtag(){
-
-          if (twitterCounter < hashtagList.length-1) {
-            inserDataToScope();
-            twitterCounter++;
-          }else{
-            twitterCounter = 0;
-            inserDataToScope();
-          }
-
-          console.log("Twitter Counter: ", twitterCounter);
-      }
-        
-        function getDataFromStorage() {
-
-          
-          temp = localStorage.getItem('twitter');
-          twitterData = JSON.parse(temp);
-
-          hashtagList = twitterData.pop();
-
-          // localStorage.setItem('twitter-position',0);
-          // localStorage.setItem('twitter-counter',0);
-          $(".twitter-portrait .loader").fadeOut("slow");
-          inserDataToScope();
-      }
 
       function inserDataToScope(){
 
 
-            var tweets = twitterData.status.statuses;
+            // var tweets = twitterData[twitterCounter].statuses;
+            var tweets = twitterData[twitterArray].statuses;
             var tweetsCount  = tweets.length-1;
             var currentPosition = twitterPosition;
             var nextTweetPosition = (currentPosition < tweetsCount)? currentPosition+1 : 0;
-            console.log("Current Tweet Position: " + currentPosition +"/"+tweetsCount);
-                
-            $scope.topHashtag = removeSpace(twitterData.status.topHastagToday);
-            
-            
-            // if ($scope.topHashtag.length > 15) {
-            //     $(".hashtag-overlay").css("font-size","3.5em");
-            //     $(".hashtag-overlay").css("top","2.5em");
-            //     $(".hashtag-overlay").css("letter-spacing","0");
-            // }else {
-            //     $(".hashtag-overlay").css("font-size","7em");
-            //     $(".hashtag-overlay").css("top","1em");
-            // }
+            console.log("Current Tweet Position: " + currentPosition +"/"+tweetsCount +' of array['+twitterArray+']');
+
+            // $scope.topHashtag = removeSpace(hashtagList[twitterCounter]);
+            $scope.topHashtag = removeSpace(twitterData[twitterArray].Hashtag);
 
 
+            if ($scope.topHashtag.length >= 15) {
+                $(".hashtag-overlay").css("font-size","1.1em");
+                $(".hashtag-overlay").css("letter-spacing","0");
+                $(".hashtag-overlay").css("top","5em");
+            }else {
+                $(".hashtag-overlay").css("font-size","1.3em");
+                $(".hashtag-overlay").css("top","4em");
+            }
+
+            
             $scope.tweet = tweets[currentPosition];
-            $scope.tweetTextPort = removeEmojis(tweets[currentPosition].text);
+            $scope.tweetText = removeEmojis(tweets[currentPosition].text);
             $scope.tweetDate = moment(tweets[currentPosition].created_at).format('LL');
             
             
@@ -158,49 +67,42 @@ function temp20Controller($scope, $window, $timeout, $http, temp2Src, callback, 
             $scope.name = removeEmojis(tweets[currentPosition].user.name);
             $scope.username = removeEmojis(tweets[currentPosition].user.screen_name);
 
+
             
-            if(!$scope.$$phase) {
-              $scope.$apply();
-            }
 //            $scope.$apply();
             
             changePosition(currentPosition,tweetsCount);
             // checkIfDataEnds();
 
               if (loopCounter == 0) {
-              	twitterloop();
-              	cb = true;
-              	callCallback();
-              	loopCounter++;
+                twitterloop();
+                loopCounter++;
               }
             
         
         }
 
-        function twitterloop() {
+            
+        function twitterloop(){
 
+          if (config.loop) {
 
-			if (config.loop) {	
+                interval7 = setInterval(function () {
+                    twitterRemoveClass();
+                  }, config.loopInterval/2);
 
-	              interval11 = setInterval(function () {
-	                  twitterRemoveClass();
-	                }, config.loopInterval/2);
+              
+                interval8 = setInterval(function () {
 
-	            
-	              interval12 = setInterval(function () {
-
-	                  $scope.$apply(function(){
-	                    inserDataToScope();
-	                    twitterAddClass();
-	                    });
-	                    
-	                }, config.loopInterval);
-	            
-	        }
-
+                    $scope.$apply(function(){
+                      inserDataToScope();
+                      twitterAddClass();
+                      });
+                      
+                  }, config.loopInterval);
+              
+          }         
         }
-
-	                	
         
 
         
@@ -226,25 +128,34 @@ function temp20Controller($scope, $window, $timeout, $http, temp2Src, callback, 
             
         }
         
+        function updateValues() {
+          $scope.TemplateData.forEach(function(item){
+          if(item.Template == 'temp20'){
+              item.lastTweet = twitterPosition
+              item.lastArray = twitterArray;
+              }
+        })
+        }
+
       function changePosition(currentPosition,tweetsCount) {
 
-              if (currentPosition >= tweetsCount) {
+              if (twitterPosition >= tweetsCount) {
                   twitterPosition = 0;
-                  localStorage.setItem('twitter-position', currentPosition);
-                  localStorage.setItem('twitter-counter',twitterCounter);
-                  currentHashtag();
+                  twitterArray = twitterArray+1;
+                  console.log('twitterData: '+twitterData.length);
+                  if(twitterArray>= twitterData.length){
+                    twitterArray = 0;
+                  }
+                  updateValues();
+                  console.log('twitterArray: '+twitterArray);
               } else {
                   twitterPosition++;
-                  localStorage.setItem('twitter-position', currentPosition);
-                  localStorage.setItem('twitter-counter', twitterCounter);
+                  updateValues();
               }
 
-              $scope.TemplateData.forEach(function(item){
-					if(item.Template == 'temp20'){
-							item.lastTweet = twitterPosition
-			    		}
-				})
+
             
+            // inserDataToScope();
             return currentPosition;
 
           }
@@ -256,31 +167,19 @@ function temp20Controller($scope, $window, $timeout, $http, temp2Src, callback, 
         }
 
 
-	function removeInterval() {
+  function removeInterval() {
+
+    if (interval7 != undefined && interval8 != undefined) {
+      clearInterval(interval7);
+      clearInterval(interval8);   
+    } 
 
 
-	clearInterval(interval11);
-	clearInterval(interval12);		
+  }
 
 
-	}
-
-	$scope.TemplateData.forEach(function(item){
-		if(item.Template == 'temp20'){
-    			twitterData = item.TempData;
-    			twitterPosition = item.lastTweet;
+    $timeout(removeInterval, 38000);   
+    $timeout(callback, 40000);
 
 
-		          $(".twitter .loader").fadeOut("slow");
-		          inserDataToScope();
-    		}
-	})
-
-
-	function callCallback(){
-		if (cb) {
-			$timeout(removeInterval, 58000);   
-		    $timeout(callback, 60000);	
-		}
-	}
-}
+};

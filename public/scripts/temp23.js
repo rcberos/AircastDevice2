@@ -20,7 +20,7 @@ function temp23Controller($scope, $window, $timeout, $http, tempSrc, callback){
 	    var config = {
 	        'lat': 14.609695,
 	        'long': 121.0747,
-	        'loopStore': true,
+	        'loopStore': false,
 	        'loopInterval': 10000,
 	        'imgList': ['/assets/sample-image.jpg','/assets/one.jpeg','/assets/two.jpeg','/assets/three.jpeg','/assets/four.jpeg','/assets/five.jpeg'],
 	        'bgList':  { 'general':'/assets/bg_universal.png', 'korean':'/assets/bg_jap_kor.png', 'asian':'/assets/bg_asian.png' },
@@ -50,140 +50,18 @@ function temp23Controller($scope, $window, $timeout, $http, tempSrc, callback){
 	    config.url = 'https://developers.zomato.com/api/v2.1/geocode?lat=' + config.lat + '&lon=' + config.long;
 
 		    $("#rateYo").rateYo({
-		        starWidth: "30px",
+		        starWidth: "25px",
 		    });
-
-
-	      function checkIfRestaurantDataExpired(){
-
-	          var currentTimeStamp = moment().unix();
-
-	          if (localStorage.getItem('restaurant-expiration-date') == null) {
-
-	              fetchRestaurantData(config.url);
-	          
-	          }else{
-
-	            if(localStorage.getItem('restaurant-expiration-date') >= currentTimeStamp) {
-	              console.log("restaurant data is still good and data is still within 1 month.");
-	              console.log("Getting data from the local storage");
-
-	              if (localStorage.getItem('restaurant') == null || localStorage.getItem('restaurant') == '') {
-	                console.log("data is not good, getting data from the api");
-	                fetchRestaurantData(config.url);
-	              }
-
-	              getDataFromStorage();
-
-	            }else{
-
-	              fetchRestaurantData(config.url);
-
-
-	            }
-
-	          }
-
-	        } // end of the checkIfNewsDataExpired function
 
 
 	        for(var i=0; i< $scope.TemplateData.length; i++){
 	    		if($scope.TemplateData[i].Template == 'temp23'){
 	    			restaurantData = $scope.TemplateData[i].TempData;
+	    			console.log('ppumasok dito');
 	    			insertDataToScope();
 	    		}
 	    	}
     	
-
-	        // checkIfRestaurantDataExpired();
-
-	        function fetchRestaurantData(url){
-
-	            var currentTimeStamp = moment().unix() + 2592000;
-
-	           $http.get(url,config.zomatoConfig)
-	              .then(function(response) {
-
-	                  if (response.data) {
-
-	                    var restaurants = response.data.nearby_restaurants;
-
-	                    for (var i = 0 ; i < restaurants.length; i++) {
-
-	                      if (restaurantNameList.indexOf(restaurants[i].restaurant.name) == -1) {
-	                        restaurantNameList.push(restaurants[i].restaurant.name);
-	                        restaurantList.push(restaurants[i]);
-	                      }
-	                    }
-
-	                      if (restaurantList.length < 100) {
-	                        checkIfListReach50(restaurantList.length);
-	                      }else{
-	                        localStorage.setItem('restaurant-expiration-date',currentTimeStamp);
-	                        localStorage.setItem('restaurant',JSON.stringify(restaurantList));
-	                        getDataFromStorage();
-	                      }
-	                      
-	                  } else {
-	                      console.log("nothing returned");
-	                  }
-	              })
-	              .catch(function() {
-	                  // handle error
-	                  console.log('error occurred');
-	                  if (cb == false) {
-	                  	callback();	
-	                  }
-	                  
-
-	              })
-
-	        }
-
-	        function checkIfListReach50(restaurantListLength){
-
-	           var currentTimeStamp = moment().unix() + 2592000;
-	           console.log(restaurantListLength);
-
-	            config.lat += .01;
-
-	            if (tempCount == restaurantListLength) {
-	              config.long += 0.01;
-	              counter++;
-	            }else {
-	              tempCount = restaurantListLength;
-	              counter = 0;
-	            }
-
-	            if (counter > 5) {
-	                localStorage.setItem('restaurant-expiration-date',currentTimeStamp);
-	                localStorage.setItem('restaurant',JSON.stringify(restaurantList));
-	                //location.reload();
-	                getDataFromStorage();
-
-	            }else {
-	              url = 'https://developers.zomato.com/api/v2.1/geocode?lat=' + config.lat + '&lon=' + config.long;
-	              fetchRestaurantData(url);
-	            }
-
-
-	        }
-
-	        function getDataFromStorage() {
-
-	          console.log("fetch data from local storage");
-
-	          temp = localStorage.getItem('restaurant');
-	          restaurantData = JSON.parse(temp);
-	          console.log(restaurantData);
-	          // localStorage.setItem('restaurant-position',0);
-
-	          insertDataToScope();
-	      }
-
-
-	    
-
 	      //insert all the data to the angular $scope
 	      function insertDataToScope() {
 	          
@@ -347,8 +225,8 @@ function temp23Controller($scope, $window, $timeout, $http, tempSrc, callback){
 		function callCallback(){
 
 			if (cb) {
-				$timeout(removeInterval2, 38000);      
-				$timeout(callback, 40000);
+				$timeout(removeInterval2, 28000);      
+				$timeout(callback, 30000);
 			}
 			
 		}
